@@ -42,7 +42,8 @@ function onClearAllApiKeys() {
 // Updates the OAuth Access Token (API key), so it reflects in UI and gets used in TRY calls
 function updateOAuthKey(apiKeyId, tokenType = 'Bearer', accessToken) {
   const securityObj = this.resolvedSpec.securitySchemes.find((v) => (v.apiKeyId === apiKeyId));
-  securityObj.finalKeyValue = `${(tokenType.toLowerCase() === 'bearer' ? 'Bearer' : (tokenType.toLowerCase() === 'mac' ? 'MAC' : tokenType))} ${accessToken}`;
+  const tokenPrefix = tokenType && tokenType.toLowerCase() === 'bearer' ? 'Bearer' : tokenType;
+  securityObj.finalKeyValue = `${tokenPrefix}${tokenPrefix ? ' ' : ''}${accessToken}`;
   this.requestUpdate();
 }
 
@@ -191,14 +192,15 @@ function oAuthFlowTemplate(flowName, clientId, clientSecret, apiKeyId, authFlow)
   let tokenUrl = authFlow.tokenUrl;
   let refreshUrl = authFlow.refreshUrl;
   const isUrlAbsolute = (url) => (url.indexOf('://') > 0 || url.indexOf('//') === 0);
+  const serverUrlObj = new URL(this.selectedServer.computedUrl);
   if (refreshUrl && !isUrlAbsolute(refreshUrl)) {
-    refreshUrl = `${this.selectedServer.computedUrl}/${refreshUrl.replace(/^\//, '')}`;
+    refreshUrl = `${serverUrlObj.origin}/${refreshUrl.replace(/^\//, '')}`;
   }
   if (tokenUrl && !isUrlAbsolute(tokenUrl)) {
-    tokenUrl = `${this.selectedServer.computedUrl}/${tokenUrl.replace(/^\//, '')}`;
+    tokenUrl = `${serverUrlObj.origin}/${tokenUrl.replace(/^\//, '')}`;
   }
   if (authorizationUrl && !isUrlAbsolute(authorizationUrl)) {
-    authorizationUrl = `${this.selectedServer.computedUrl}/${authorizationUrl.replace(/^\//, '')}`;
+    authorizationUrl = `${serverUrlObj.origin}/${authorizationUrl.replace(/^\//, '')}`;
   }
   let flowNameDisplay;
   if (flowName === 'authorizationCode') {
